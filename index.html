@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SafeBite - AI Allergy & G6PD Scanner</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--primary:#10b981;--primary-dark:#059669;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--bg:#0f172a;--bg-card:#1e293b;--bg-card2:#334155;--text:#f8fafc;--text-muted:#94a3b8;--border:#475569;--safe:#10b981;--may-affect:#f59e0b;--dangerous:#ef4444;--severe:#dc2626}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .navbar{background:rgba(30,41,59,0.95);backdrop-filter:blur(10px);padding:1rem 2rem;position:fixed;top:0;width:100%;z-index:1000;border-bottom:1px solid var(--border)}
+        .nav-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+        .logo{display:flex;align-items:center;gap:0.5rem;font-size:1.5rem;font-weight:700;color:var(--primary)}
+        .logo i{font-size:1.8rem}
+        .nav-links{display:flex;gap:1.5rem;align-items:center}
+        .nav-links a{color:var(--text-muted);text-decoration:none;transition:color .3s;cursor:pointer;font-size:0.9rem}
+        .nav-links a:hover,.nav-links a.active{color:var(--primary)}
+        .nav-btn{background:var(--primary);color:#fff;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-weight:500;transition:all .3s;font-size:0.9rem}
+        .nav-btn:hover{background:var(--primary-dark);transform:translateY(-2px)}
+        .nav-btn.outline{background:transparent;border:1px solid var(--primary);color:var(--primary)}
+        .nav-btn.danger{background:var(--danger)}
+        .user-menu{display:none;align-items:center;gap:.75rem}
+        .user-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.85rem}
+        .page{display:none;padding-top:80px;min-height:100vh}
+        .page.active{display:block}
+        .hero{text-align:center;padding:4rem 2rem;background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(59,130,246,.1))}
+        .hero h1{font-size:3rem;margin-bottom:1rem;background:linear-gradient(135deg,var(--primary),var(--info));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero p{font-size:1.2rem;color:var(--text-muted);max-width:600px;margin:0 auto 2rem}
+        .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;max-width:1000px;margin:0 auto;padding:2rem}
+        .feature-card{background:var(--bg-card);padding:2rem;border-radius:16px;border:1px solid var(--border);transition:transform .3s,border-color .3s}
+        .feature-card:hover{transform:translateY(-5px);border-color:var(--primary)}
+        .feature-card i{font-size:2.5rem;color:var(--primary);margin-bottom:1rem}
+        .feature-card h3{margin-bottom:.5rem}
+        .feature-card p{color:var(--text-muted);font-size:.9rem}
+        .scanner-container{max-width:800px;margin:2rem auto;padding:2rem}
+        .upload-area{border:2px dashed var(--border);border-radius:16px;padding:3rem;text-align:center;transition:all .3s;cursor:pointer;background:var(--bg-card)}
+        .upload-area:hover,.upload-area.dragover{border-color:var(--primary);background:rgba(16,185,129,.1)}
+        .upload-area i{font-size:4rem;color:var(--primary);margin-bottom:1rem}
+        .upload-area p{color:var(--text-muted);margin-top:1rem}
+        .preview-container{margin-top:2rem;text-align:center;display:none}
+        .preview-image{max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--border)}
+        .scan-btn{margin-top:1.5rem;background:linear-gradient(135deg,var(--primary),var(--info));color:#fff;padding:1rem 2rem;border:none;border-radius:12px;font-size:1.1rem;font-weight:600;cursor:pointer;transition:transform .3s,box-shadow .3s}
+        .scan-btn:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(16,185,129,.3)}
+        .scan-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .loading{display:none;text-align:center;padding:2rem}
+        .spinner{width:50px;height:50px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1rem}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .results{display:none;margin-top:2rem}
+        .result-card{background:var(--bg-card);border-radius:16px;padding:2rem;border-left:4px solid}
+        .result-card.safe{border-left-color:var(--safe)}
+        .result-card.may-affect{border-left-color:var(--may-affect)}
+        .result-card.dangerous{border-left-color:var(--dangerous)}
+        .result-card.severe{border-left-color:var(--severe)}
+        .result-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
+        .result-icon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+        .result-card.safe .result-icon{background:rgba(16,185,129,.2);color:var(--safe)}
+        .result-card.may-affect .result-icon{background:rgba(245,158,11,.2);color:var(--may-affect)}
+        .result-card.dangerous .result-icon{background:rgba(239,68,68,.2);color:var(--dangerous)}
+        .result-card.severe .result-icon{background:rgba(220,38,38,.2);color:var(--severe)}
+        .result-title{font-size:1.5rem;font-weight:700}
+        .result-subtitle{color:var(--text-muted);font-size:0.9rem}
+        .ingredients-list{margin-top:1.5rem;padding:1rem;background:var(--bg);border-radius:8px}
+        .ingredients-list h4{margin-bottom:.5rem;color:var(--primary)}
+        .ingredients-list p{color:var(--text-muted);line-height:1.6}
+        .warnings{margin-top:1.5rem}
+        .warning-item{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem;background:rgba(239,68,68,.1);border-radius:8px;margin-bottom:.5rem}
+        .warning-item i{color:var(--danger);margin-top:.25rem;flex-shrink:0}
+        .warning-item.safe{background:rgba(16,185,129,.1)}
+        .warning-item.safe i{color:var(--safe)}
+        .warning-item.info{background:rgba(59,130,246,.1)}
+        .warning-item.info i{color:var(--info)}
+        .profile-container{max-width:800px;margin:2rem auto;padding:2rem}
+        .profile-header{text-align:center;margin-bottom:2rem}
+        .profile-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--info));display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;margin:0 auto 1rem}
+        .allergy-section{background:var(--bg-card);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+        .allergy-section h3{margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+        .allergy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem}
+        .allergy-item{display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--bg);border-radius:8px;cursor:pointer;transition:all .3s;border:2px solid transparent;user-select:none}
+        .allergy-item:hover{border-color:var(--primary)}
+        .allergy-item.selected{border-color:var(--primary);background:rgba(16,185,129,.15)}
+        .allergy-item input{display:none}
+        .save-profile-btn{width:100%;background:var(--primary);color:#fff;padding:1rem;border:none;border-radius:12px;font-size:1.1rem;font-weight:600;cursor:pointer;margin-top:1rem}
+        .info-container{max-width:1000px;margin:2rem auto;padding:2rem}
+        .allergy-info-card{background:var(--bg-card);border-radius:16px;padding:2rem;margin-bottom:1.5rem;border:1px solid var(--border)}
+        .allergy-info-card h3{font-size:1.3rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+        .food-list{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem}
+        .food-column h4{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+        .food-column.safe h4{color:var(--safe)}
+        .food-column.avoid h4{color:var(--danger)}
+        .food-column ul{list-style:none;color:var(--text-muted)}
+        .food-column ul li{padding:.4rem 0;padding-left:1rem;position:relative;font-size:0.9rem}
+        .food-column.safe ul li::before{content:"\2713";position:absolute;left:0;color:var(--safe)}
+        .food-column.avoid ul li::before{content:"\2717";position:absolute;left:0;color:var(--danger)}
+        .history-container{max-width:800px;margin:2rem auto;padding:2rem}
+        .history-item{background:var(--bg-card);border-radius:12px;padding:1.5rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;border-left:4px solid}
+        .history-item.safe{border-left-color:var(--safe)}
+        .history-item.may-affect{border-left-color:var(--may-affect)}
+        .history-item.dangerous{border-left-color:var(--dangerous)}
+        .history-item.severe{border-left-color:var(--severe)}
+        .history-info{flex:1}
+        .history-info h4{margin-bottom:.25rem}
+        .history-info p{color:var(--text-muted);font-size:.85rem}
+        .history-status{padding:.4rem .8rem;border-radius:20px;font-size:.8rem;font-weight:600;white-space:nowrap}
+        .history-status.safe{background:rgba(16,185,129,.2);color:var(--safe)}
+        .history-status.may-affect{background:rgba(245,158,11,.2);color:var(--may-affect)}
+        .history-status.dangerous{background:rgba(239,68,68,.2);color:var(--dangerous)}
+        .history-status.severe{background:rgba(220,38,38,.2);color:var(--severe)}
+        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center}
+        .modal-overlay.active{display:flex}
+        .modal{background:var(--bg-card);border-radius:16px;padding:2rem;width:90%;max-width:420px;border:1px solid var(--border);position:relative;max-height:90vh;overflow-y:auto}
+        .modal h2{text-align:center;margin-bottom:1.5rem}
+        .form-group{margin-bottom:1rem}
+        .form-group label{display:block;margin-bottom:.5rem;color:var(--text-muted);font-size:.9rem}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;font-family:inherit}
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary)}
+        .form-group small{color:var(--text-muted);font-size:.8rem;margin-top:.25rem;display:block}
+        .auth-btn{width:100%;padding:.75rem;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:.75rem;transition:all .3s}
+        .auth-btn.primary{background:var(--primary);color:#fff}
+        .auth-btn.google{background:#fff;color:#333;display:flex;align-items:center;justify-content:center;gap:.5rem}
+        .auth-toggle{text-align:center;margin-top:1rem;color:var(--text-muted)}
+        .auth-toggle a{color:var(--primary);cursor:pointer;text-decoration:none}
+        .close-modal{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;z-index:10}
+        .admin-container{max-width:1000px;margin:2rem auto;padding:2rem}
+        .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem}
+        .admin-card{background:var(--bg-card);border-radius:12px;padding:1.5rem}
+        .admin-card h3{margin-bottom:1rem;color:var(--primary)}
+        .stat-number{font-size:2.5rem;font-weight:700;color:var(--primary)}
+        .stat-label{color:var(--text-muted);font-size:.9rem}
+        .admin-table{width:100%;border-collapse:collapse;margin-top:1rem}
+        .admin-table th,.admin-table td{padding:.75rem;text-align:left;border-bottom:1px solid var(--border);font-size:.85rem}
+        .admin-table th{color:var(--text-muted);font-weight:500}
+        .mobile-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg-card);padding:1rem 1.5rem;border-radius:12px;border-left:4px solid var(--primary);box-shadow:0 10px 30px rgba(0,0,0,.3);transform:translateX(150%);transition:transform .3s;z-index:3000;max-width:90vw}
+        .toast.show{transform:translateX(0)}
+        .toast.error{border-left-color:var(--danger)}
+        .toast.success{border-left-color:var(--safe)}
+        .text-input-area{margin-top:1.5rem;padding:1.5rem;background:var(--bg-card);border-radius:12px}
+        .text-input-area h4{margin-bottom:.75rem;color:var(--primary)}
+        .text-input-area textarea{width:100%;min-height:100px;padding:1rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;resize:vertical}
+        .text-input-area textarea:focus{outline:none;border-color:var(--primary)}
+        .analyze-text-btn{margin-top:.75rem;background:var(--info);color:#fff;padding:.75rem 1.5rem;border:none;border-radius:8px;cursor:pointer;font-weight:500}
+        .food-search{width:100%;padding:.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;margin-bottom:.75rem}
+        .food-search:focus{outline:none;border-color:var(--primary)}
+        .food-suggestions{display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;margin-bottom:.75rem}
+        .food-suggestion{padding:.75rem 1rem;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;transition:background .2s}
+        .food-suggestion:hover{background:var(--bg-card2)}
+        .food-suggestion:last-child{border-bottom:none}
+        .food-suggestion .food-name{font-weight:500}
+        .food-suggestion .food-allergens{color:var(--text-muted);font-size:.75rem}
+        .hidden{display:none !important}
+        .ai-badge{display:inline-flex;align-items:center;gap:.35rem;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;padding:.25rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600;margin-left:.5rem}
+        .ai-badge i{font-size:.6rem}
+        .settings-section{background:var(--bg-card);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;border:1px solid var(--border)}
+        .settings-section h3{margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;color:var(--primary)}
+        .api-key-input{display:flex;gap:.5rem}
+        .api-key-input input{flex:1}
+        .api-key-input button{white-space:nowrap}
+        .api-status{margin-top:.5rem;padding:.5rem;border-radius:8px;font-size:.85rem}
+        .api-status.connected{background:rgba(16,185,129,.15);color:var(--safe)}
+        .api-status.disconnected{background:rgba(239,68,68,.15);color:var(--danger)}
+        .ai-analysis-box{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:1.25rem;margin-top:1rem}
+        .ai-analysis-box h4{color:#a78bfa;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+        .ai-analysis-box p{color:var(--text-muted);font-size:.9rem;line-height:1.6}
+        @media(max-width:768px){
+            .navbar{padding:.75rem 1rem}
+            .nav-links{display:none;position:absolute;top:100%;left:0;width:100%;background:var(--bg-card);flex-direction:column;padding:1rem;border-bottom:1px solid var(--border);gap:0;max-height:calc(100vh - 60px);overflow-y:auto}
+            .nav-links.active{display:flex}
+            .mobile-menu-btn{display:block}
+            .hero{padding:2rem 1rem}
+            .hero h1{font-size:2rem}
+            .hero p{font-size:1rem}
+            .features{padding:1rem;gap:1rem}
+            .feature-card{padding:1.25rem}
+            .scanner-container,.profile-container,.info-container,.history-container,.admin-container{padding:1rem;margin:1rem auto}
+            .allergy-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+            .food-list{grid-template-columns:1fr}
+            .history-item{flex-direction:column;align-items:flex-start}
+            .admin-grid{grid-template-columns:1fr}
+            .modal{width:95%;padding:1.5rem}
+            .toast{left:1rem;right:1rem;bottom:1rem}
+            .upload-area{padding:1.5rem}
+            .upload-area i{font-size:2.5rem}
+            .nav-links a{padding:.75rem;text-align:center;border-bottom:1px solid var(--border);width:100%}
+            #authButtons,#userMenu{flex-direction:column;width:100%;gap:.5rem}
+            #authButtons .nav-btn,#userMenu .nav-btn{width:100%;text-align:center}
+            .result-header{flex-direction:column;text-align:center}
+            .api-key-input{flex-direction:column}
+            .page{padding-top:70px}
+        }
+        @media(hover:none)and(pointer:coarse){
+            .nav-links a,.allergy-item,.nav-btn,.auth-btn,.scan-btn,.save-profile-btn{min-height:44px;min-width:44px}
+            .form-group input{font-size:16px}
+        }
+        @supports(padding-top:env(safe-area-inset-top)){
+            .navbar{padding-top:calc(.75rem + env(safe-area-inset-top));padding-left:calc(1rem + env(safe-area-inset-left));padding-right:calc(1rem + env(safe-area-inset-right))}
+        }
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo"><i class="fas fa-shield-alt"></i><span>SafeBite</span></div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a onclick="showPage('home')" class="active" data-page="home">Home</a>
+                <a onclick="showPage('scanner')" data-page="scanner">Scanner</a>
+                <a onclick="showPage('allergies')" data-page="allergies">Allergies</a>
+                <a onclick="showPage('history')" data-page="history">History</a>
+                <a onclick="showPage('settings')" data-page="settings"><i class="fas fa-cog"></i></a>
+                <a onclick="showPage('admin')" data-page="admin" id="adminLink" class="hidden">Admin</a>
+                <div id="authButtons">
+                    <button class="nav-btn outline" onclick="showAuthModal('login')">Sign In</button>
+                    <button class="nav-btn" onclick="showAuthModal('register')">Sign Up</button>
+                </div>
+                <div id="userMenu" class="user-menu">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span id="userName" style="font-size:0.85rem"></span>
+                    <button class="nav-btn outline" onclick="showPage('profile')">Profile</button>
+                    <button class="nav-btn danger" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HOME -->
+    <div class="page active" id="homePage">
+        <div class="hero">
+            <h1><i class="fas fa-shield-alt"></i> SafeBite</h1>
+            <p>AI-powered food safety. Scan any food image or ingredient list and instantly know if it's safe for your allergies, G6PD, or medical conditions.</p>
+            <button class="scan-btn" onclick="showPage('scanner')"><i class="fas fa-camera"></i> Start Scanning</button>
+        </div>
+        <div class="features">
+            <div class="feature-card"><i class="fas fa-camera"></i><h3>Photo Scanner</h3><p>Snap a photo of any food or ingredient label. GPT-4 Vision reads and identifies everything.</p></div>
+            <div class="feature-card"><i class="fas fa-brain"></i><h3>Real AI Analysis</h3><p>Powered by OpenAI GPT-4. Not just pattern matching - real understanding of food and allergies.</p></div>
+            <div class="feature-card"><i class="fas fa-user-shield"></i><h3>30+ Allergies</h3><p>G6PD, peanuts, dairy, gluten, shellfish, and 25+ more conditions tracked automatically.</p></div>
+            <div class="feature-card"><i class="fas fa-exclamation-triangle"></i><h3>Instant Alerts</h3><p>Clear results: Safe, May Affect, Dangerous, or Could Cause Severe Reaction.</p></div>
+        </div>
+    </div>
+
+    <!-- SCANNER -->
+    <div class="page" id="scannerPage">
+        <div class="scanner-container">
+            <h2 style="text-align:center;margin-bottom:1.5rem"><i class="fas fa-camera"></i> AI Food Scanner <span class="ai-badge"><i class="fas fa-bolt"></i> GPT-4 Powered</span></h2>
+
+            <div class="allergy-section" style="margin-bottom:1.5rem">
+                <h3 style="font-size:1rem"><i class="fas fa-allergies"></i> Your Allergies</h3>
+                <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem">Select what applies to you. If none selected, checks ALL allergies.</p>
+                <div class="allergy-grid" id="quickAllergyGrid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.5rem">
+                    <div class="allergy-item" data-allergy="g6pd" onclick="toggleAllergyItem(this)"><span>&#x1fa78;</span><span>G6PD</span></div>
+                    <div class="allergy-item" data-allergy="peanut" onclick="toggleAllergyItem(this)"><span>&#x195C;</span><span>Peanut</span></div>
+                    <div class="allergy-item" data-allergy="treenut" onclick="toggleAllergyItem(this)"><span>&#x1F330;</span><span>Tree Nuts</span></div>
+                    <div class="allergy-item" data-allergy="milk" onclick="toggleAllergyItem(this)"><span>&#x1F95B;</span><span>Milk</span></div>
+                    <div class="allergy-item" data-allergy="egg" onclick="toggleAllergyItem(this)"><span>&#x1F95A;</span><span>Egg</span></div>
+                    <div class="allergy-item" data-allergy="wheat" onclick="toggleAllergyItem(this)"><span>&#x1F33E;</span><span>Wheat</span></div>
+                    <div class="allergy-item" data-allergy="soy" onclick="toggleAllergyItem(this)"><span>&#x1FAD8;</span><span>Soy</span></div>
+                    <div class="allergy-item" data-allergy="shellfish" onclick="toggleAllergyItem(this)"><span>&#x1F990;</span><span>Shellfish</span></div>
+                    <div class="allergy-item" data-allergy="fish" onclick="toggleAllergyItem(this)"><span>&#x1F41F;</span><span>Fish</span></div>
+                    <div class="allergy-item" data-allergy="sesame" onclick="toggleAllergyItem(this)"><span>&#x26AA;</span><span>Sesame</span></div>
+                    <div class="allergy-item" data-allergy="sulfite" onclick="toggleAllergyItem(this)"><span>&#x1F377;</span><span>Sulfite</span></div>
+                    <div class="allergy-item" data-allergy="corn" onclick="toggleAllergyItem(this)"><span>&#x1F33D;</span><span>Corn</span></div>
+                    <div class="allergy-item" data-allergy="celery" onclick="toggleAllergyItem(this)"><span>&#x1F96C;</span><span>Celery</span></div>
+                    <div class="allergy-item" data-allergy="mustard" onclick="toggleAllergyItem(this)"><span>&#x1F4A9;</span><span>Mustard</span></div>
+                    <div class="allergy-item" data-allergy="lupin" onclick="toggleAllergyItem(this)"><span>&#x1F33B;</span><span>Lupin</span></div>
+                    <div class="allergy-item" data-allergy="molluscs" onclick="toggleAllergyItem(this)"><span>&#x1F41A;</span><span>Molluscs</span></div>
+                    <div class="allergy-item" data-allergy="sulphur" onclick="toggleAllergyItem(this)"><span>&#x1F4A8;</span><span>Sulphur Dioxide</span></div>
+                    <div class="allergy-item" data-allergy="nightshade" onclick="toggleAllergyItem(this)"><span>&#x1F335;</span><span>Nightshade</span></div>
+                    <div class="allergy-item" data-allergy="histamine" onclick="toggleAllergyItem(this)"><span>&#x26A0;</span><span>Histamine</span></div>
+                    <div class="allergy-item" data-allergy="fructose" onclick="toggleAllergyItem(this)"><span>&#x1F34E;</span><span>Fructose</span></div>
+                    <div class="allergy-item" data-allergy="lactose" onclick="toggleAllergyItem(this)"><span>&#x2757;</span><span>Lactose</span></div>
+                    <div class="allergy-item" data-allergy="gluten" onclick="toggleAllergyItem(this)"><span>&#x1F35E;</span><span>Gluten</span></div>
+                    <div class="allergy-item" data-allergy="fodmap" onclick="toggleAllergyItem(this)"><span>&#x1F9C0;</span><span>FODMAP</span></div>
+                    <div class="allergy-item" data-allergy="oxalate" onclick="toggleAllergyItem(this)"><span>&#x1F962;</span><span>Oxalate</span></div>
+                </div>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Upload Food Image</h3>
+                <p>Photo of food, ingredient label, or menu. AI reads everything.</p>
+                <div style="display:flex;gap:.75rem;justify-content:center;margin-top:1rem;flex-wrap:wrap">
+                    <button class="scan-btn" onclick="document.getElementById('imageInput').click()" style="margin:0;padding:.75rem 1.5rem;font-size:.95rem"><i class="fas fa-image"></i> Gallery</button>
+                    <button class="scan-btn" onclick="document.getElementById('cameraInput').click()" style="margin:0;padding:.75rem 1.5rem;font-size:.95rem;background:linear-gradient(135deg,#8b5cf6,#6366f1)"><i class="fas fa-camera"></i> Camera</button>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" style="display:none">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <img id="previewImage" class="preview-image" alt="Preview">
+                <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+                    <button class="scan-btn" id="scanBtn" onclick="analyzeImage()"><i class="fas fa-search"></i> Analyze with AI</button>
+                    <button class="scan-btn" onclick="resetUpload()" style="background:var(--bg-card2);border:1px solid var(--border)"><i class="fas fa-times"></i> Remove</button>
+                </div>
+            </div>
+
+            <div class="text-input-area">
+                <h4><i class="fas fa-keyboard"></i> Or Type Food / Ingredients</h4>
+                <input type="text" class="food-search" id="foodSearch" placeholder="Search food (e.g. burger, pizza, sushi)..." oninput="searchFood(this.value)">
+                <div class="food-suggestions" id="foodSuggestions"></div>
+                <textarea id="manualIngredients" placeholder="Or paste/type ingredients here...&#10;Example: Water, Sugar, Peanut Butter, Wheat Flour, Milk, Egg, Soy Lecithin"></textarea>
+                <button class="analyze-text-btn" onclick="analyzeManualIngredients()"><i class="fas fa-search"></i> Analyze with AI</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p id="loadingText">Analyzing with GPT-4 AI...</p>
+            </div>
+
+            <div class="results" id="results">
+                <div class="result-card" id="resultCard">
+                    <div class="result-header">
+                        <div class="result-icon" id="resultIcon"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="result-title" id="resultTitle">Safe</div>
+                            <div class="result-subtitle" id="resultSubtitle">This product appears safe for you</div>
+                        </div>
+                    </div>
+                    <div class="ingredients-list">
+                        <h4>Detected Ingredients:</h4>
+                        <p id="detectedIngredients"></p>
+                    </div>
+                    <div class="warnings" id="warnings"></div>
+                    <div class="ai-analysis-box" id="aiAnalysis" style="display:none">
+                        <h4><i class="fas fa-robot"></i> AI Analysis</h4>
+                        <p id="aiAnalysisText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="profilePage">
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar">U</div>
+                <h2 id="profileName">User Profile</h2>
+                <p style="color:var(--text-muted)" id="profileEmail">user@example.com</p>
+            </div>
+            <div class="allergy-section">
+                <h3><i class="fas fa-allergies"></i> Your Allergies</h3>
+                <div class="allergy-grid" id="allergyGrid"></div>
+            </div>
+            <div class="allergy-section">
+                <h3><i class="fas fa-notes-medical"></i> Medical Conditions</h3>
+                <div class="allergy-grid" id="conditionsGrid"></div>
+            </div>
+            <button class="save-profile-btn" onclick="saveProfile()"><i class="fas fa-save"></i> Save Profile</button>
+        </div>
+    </div>
+
+    <!-- ALLERGIES INFO -->
+    <div class="page" id="allergiesPage">
+        <div class="info-container">
+            <h2 style="text-align:center;margin-bottom:2rem"><i class="fas fa-info-circle"></i> All Allergies & Conditions Guide</h2>
+            <div id="allergyInfoList"></div>
+        </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="historyPage">
+        <div class="history-container">
+            <h2 style="text-align:center;margin-bottom:2rem"><i class="fas fa-history"></i> Scan History</h2>
+            <div id="historyList"><p style="text-align:center;color:var(--text-muted)">No scans yet.</p></div>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="settingsPage">
+        <div class="profile-container">
+            <h2 style="text-align:center;margin-bottom:2rem"><i class="fas fa-cog"></i> Settings</h2>
+            <div class="settings-section">
+                <h3><i class="fas fa-robot"></i> OpenAI API Key (Required for AI)</h3>
+                <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1rem">
+                    Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--primary)">platform.openai.com</a>. 
+                    This enables real GPT-4 Vision to analyze food images and ingredients.
+                </p>
+                <div class="api-key-input">
+                    <input type="password" id="apiKeyInput" placeholder="sk-..." style="flex:1">
+                    <button class="nav-btn" onclick="saveApiKey()"><i class="fas fa-save"></i> Save</button>
+                    <button class="nav-btn outline" onclick="toggleApiKeyVisibility()"><i class="fas fa-eye"></i></button>
+                </div>
+                <div class="api-status" id="apiStatus"></div>
+                <p style="color:var(--text-muted);font-size:.8rem;margin-top:.5rem"><i class="fas fa-lock"></i> Key is stored only in your browser (localStorage). Never sent to our servers.</p>
+            </div>
+            <div class="settings-section">
+                <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+                <p style="color:var(--text-muted);font-size:.9rem;line-height:1.8">
+                    1. Enter your OpenAI API key above<br>
+                    2. Select your allergies on the Scanner page<br>
+                    3. Upload a food photo or type ingredients<br>
+                    4. GPT-4 Vision reads the image, identifies food/ingredients<br>
+                    5. AI cross-references with your allergy profile<br>
+                    6. You get instant Safe / Warning / Dangerous results
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="adminPage">
+        <div class="admin-container">
+            <h2 style="text-align:center;margin-bottom:2rem"><i class="fas fa-cog"></i> Admin Panel</h2>
+            <div class="admin-grid">
+                <div class="admin-card"><h3>Total Users</h3><div class="stat-number" id="totalUsers">0</div><div class="stat-label">Registered users</div></div>
+                <div class="admin-card"><h3>Total Scans</h3><div class="stat-number" id="totalScans">0</div><div class="stat-label">Scans performed</div></div>
+                <div class="admin-card"><h3>Dangerous Alerts</h3><div class="stat-number" id="dangerousAlerts">0</div><div class="stat-label">Potential dangers found</div></div>
+            </div>
+            <div class="admin-card" style="margin-top:1.5rem">
+                <h3>Recent Activity</h3>
+                <div style="overflow-x:auto">
+                    <table class="admin-table">
+                        <thead><tr><th>User</th><th>Action</th><th>Result</th><th>Date</th></tr></thead>
+                        <tbody id="adminActivity"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <button class="close-modal" onclick="closeAuthModal()">&times;</button>
+            <div id="loginForm">
+                <h2><i class="fas fa-sign-in-alt"></i> Sign In</h2>
+                <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="Enter your email"></div>
+                <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter your password"></div>
+                <button class="auth-btn primary" onclick="loginWithEmail()">Sign In</button>
+                <button class="auth-btn google" onclick="loginWithGoogle()"><i class="fab fa-google"></i> Sign in with Google</button>
+                <p class="auth-toggle">Don't have an account? <a onclick="toggleAuthForm('register')">Sign Up</a></p>
+            </div>
+            <div id="registerForm" class="hidden">
+                <h2><i class="fas fa-user-plus"></i> Sign Up</h2>
+                <div class="form-group"><label>Full Name</label><input type="text" id="registerName" placeholder="Enter your name"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="registerEmail" placeholder="Enter your email"></div>
+                <div class="form-group"><label>Password</label><input type="password" id="registerPassword" placeholder="Create a password (min 6 chars)"></div>
+                <button class="auth-btn primary" onclick="registerWithEmail()">Create Account</button>
+                <button class="auth-btn google" onclick="loginWithGoogle()"><i class="fab fa-google"></i> Sign up with Google</button>
+                <p class="auth-toggle">Already have an account? <a onclick="toggleAuthForm('login')">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy, limit, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyB3kKqHzZaWzcKMgBgUdIdrvE75CL68lhY", authDomain: "safebite2012.firebaseapp.com", projectId: "safebite2012", storageBucket: "safebite2012.firebasestorage.app", messagingSenderId: "251282681733", appId: "1:251282681733:web:f9657b14b54bb1eb49deec", measurementId: "G-RLMKCCDGNK" };
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+        const ADMIN_EMAIL = "amakmohammed313@gmail.com";
+
+        window.loginWithEmail = async function() {
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+                closeAuthModal(); showToast('Signed in!', 'success');
+            } catch (e) { showToast(e.message, 'error'); }
+        };
+
+        window.registerWithEmail = async function() {
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, document.getElementById('registerEmail').value, document.getElementById('registerPassword').value);
+                await setDoc(doc(db, 'users', cred.user.uid), { name: document.getElementById('registerName').value, email: document.getElementById('registerEmail').value, allergies: [], conditions: [], createdAt: serverTimestamp() });
+                closeAuthModal(); showToast('Account created!', 'success');
+            } catch (e) { showToast(e.message, 'error'); }
+        };
+
+        window.loginWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                const d = await getDoc(doc(db, 'users', result.user.uid));
+                if (!d.exists()) await setDoc(doc(db, 'users', result.user.uid), { name: result.user.displayName, email: result.user.email, allergies: [], conditions: [], createdAt: serverTimestamp() });
+                closeAuthModal(); showToast('Signed in with Google!', 'success');
+            } catch (e) { showToast(e.message, 'error'); }
+        };
+
+        window.logout = async function() { await signOut(auth); showPage('home'); showToast('Signed out', 'success'); };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.currentUser = user;
+                document.getElementById('authButtons').style.display = 'none';
+                document.getElementById('userMenu').style.display = 'flex';
+                document.getElementById('userAvatar').textContent = user.displayName ? user.displayName[0] : user.email[0].toUpperCase();
+                document.getElementById('userName').textContent = user.displayName || user.email;
+                if (user.email === ADMIN_EMAIL) { document.getElementById('adminLink').classList.remove('hidden'); loadAdminStats(); }
+                const ud = await getDoc(doc(db, 'users', user.uid));
+                if (ud.exists()) { window.userProfile = ud.data(); document.getElementById('profileName').textContent = ud.data().name || 'User'; document.getElementById('profileEmail').textContent = ud.data().email; document.getElementById('profileAvatar').textContent = ud.data().name ? ud.data().name[0] : 'U'; updateAllergySelections(ud.data().allergies || [], ud.data().conditions || []); }
+                loadHistory();
+            } else {
+                window.currentUser = null; window.userProfile = null;
+                document.getElementById('authButtons').style.display = 'flex';
+                document.getElementById('userMenu').style.display = 'none';
+                document.getElementById('adminLink').classList.add('hidden');
+            }
+        });
+
+        window.saveProfile = async function() {
+            if (!window.currentUser) { showToast('Sign in first', 'error'); return; }
+            const a = Array.from(document.querySelectorAll('#allergyGrid .allergy-item.selected')).map(e => e.dataset.allergy);
+            const c = Array.from(document.querySelectorAll('#conditionsGrid .allergy-item.selected')).map(e => e.dataset.condition);
+            await updateDoc(doc(db, 'users', window.currentUser.uid), { allergies: a, conditions: c, updatedAt: serverTimestamp() });
+            window.userProfile = { ...window.userProfile, allergies: a, conditions: c };
+            showToast('Profile saved!', 'success');
+        };
+
+        window.loadHistory = async function() {
+            if (!window.currentUser) return;
+            const q = query(collection(db, 'scans'), where('userId', '==', window.currentUser.uid), orderBy('createdAt', 'desc'), limit(50));
+            const snap = await getDocs(q);
+            const el = document.getElementById('historyList');
+            if (snap.empty) { el.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No scans yet.</p>'; return; }
+            el.innerHTML = '';
+            snap.forEach(d => { const s = d.data(); const dt = s.createdAt ? s.createdAt.toDate().toLocaleDateString() : ''; el.innerHTML += `<div class="history-item ${s.status||'safe'}"><div class="history-info"><h4>${s.productName||'Scan'}</h4><p>${(s.ingredients||'').substring(0,100)}</p><p style="font-size:.8rem;margin-top:.25rem">${dt}</p></div><span class="history-status ${s.status||'safe'}">${fmtStatus(s.status)}</span></div>`; });
+        };
+
+        window.loadAdminStats = async function() {
+            const u = await getDocs(collection(db, 'users')); document.getElementById('totalUsers').textContent = u.size;
+            const s = await getDocs(collection(db, 'scans')); document.getElementById('totalScans').textContent = s.size;
+            let dc = 0; const ab = document.getElementById('adminActivity'); ab.innerHTML = '';
+            s.forEach(d => { const sc = d.data(); if (sc.status==='dangerous'||sc.status==='severe') dc++; const dt = sc.createdAt ? sc.createdAt.toDate().toLocaleDateString() : ''; ab.innerHTML += `<tr><td>${sc.userEmail||'?'}</td><td>Scan</td><td><span class="history-status ${sc.status}">${fmtStatus(sc.status)}</span></td><td>${dt}</td></tr>`; });
+            document.getElementById('dangerousAlerts').textContent = dc;
+        };
+
+        // Expose Firestore write function to main script
+        window._saveScanData = async function(data) {
+            await addDoc(collection(db, 'scans'), {
+                userId: auth.currentUser?.uid || '',
+                userEmail: auth.currentUser?.email || '',
+                productName: data.productName,
+                ingredients: data.ingredients,
+                status: data.status,
+                warnings: data.warnings,
+                createdAt: serverTimestamp()
+            });
+        };
+    </script>
+
+    <!-- MAIN APP -->
+    <script>
+    // ===== COMPREHENSIVE ALLERGY DATABASE (24+ ALLERGIES) =====
+    const ALLERGY_DB = {
+        g6pd: { name:"G6PD Deficiency", icon:"&#x1fa78;", desc:"Genetic condition. Certain foods cause red blood cell breakdown (hemolysis).", triggers:["fava","broad bean","lima bean","favism","soybean","soy","lentil","chickpea","peanut","pecan","walnut","red wine","grape juice","star fruit","carambola","blueber","cranber","cherry","plum","quinine","tonic","sulfite","sulfur dioxide","mothball","naphthalene","henna","nitrofurantoin","primaquine","chloroquine","dapsone","methylene blue","sulfa","vitamin k","probenecid","black-eyed pea","broad bean"] },
+        peanut: { name:"Peanut Allergy", icon:"&#x195C;", desc:"Can cause anaphylaxis. Even trace amounts are dangerous.", triggers:["peanut","arachis","groundnut","monkey nut"] },
+        treenut: { name:"Tree Nut Allergy", icon:"&#x1F330;", desc:"Almonds, walnuts, cashews, etc. Can be severe.", triggers:["almond","walnut","cashew","pecan","pistachio","macadamia","brazil nut","hazelnut","filbert","chestnut","pine nut","praline","marzipan","nougat","gianduja"] },
+        milk: { name:"Milk Allergy", icon:"&#x1F95B;", desc:"Reaction to milk proteins (casein, whey).", triggers:["milk","dairy","butter","cream","cheese","yogurt","yoghurt","whey","casein","caseinate","lactose","lactoglobulin","ghee"] },
+        egg: { name:"Egg Allergy", icon:"&#x1F95A;", desc:"Reaction to egg white/yolk proteins.", triggers:["egg","albumin","globulin","lysozyme","mayonnaise","meringue","sabayon","egg wash","ovomucin"] },
+        wheat: { name:"Wheat Allergy", icon:"&#x1F33E;", desc:"Immune reaction to wheat proteins.", triggers:["wheat","flour","bread","pasta","noodle","cereal","couscous","bulgur","durum","spelt","kamut","semolina","triticale","seitan","breadcrumb","cracker"] },
+        soy: { name:"Soy Allergy", icon:"&#x1FAD8;", desc:"Reaction to soybeans and soy products.", triggers:["soy","soya","tofu","tempeh","edamame","miso","natto","soybean","soy lecithin"] },
+        shellfish: { name:"Shellfish Allergy", icon:"&#x1F990;", desc:"Crustaceans: shrimp, crab, lobster. Can be life-threatening.", triggers:["shrimp","prawn","crab","lobster","crawfish","crayfish","scampi"] },
+        fish: { name:"Fish Allergy", icon:"&#x1F41F;", desc:"Allergy to finned fish.", triggers:["fish","salmon","tuna","cod","tilapia","anchov","sardine","mackerel","haddock","bass","trout","sole","flounder","surimi"] },
+        molluscs: { name:"Molluscs Allergy", icon:"&#x1F41A;", desc:"Clams, mussels, oysters, squid, octopus.", triggers:["clam","mussel","oyster","scallop","squid","calamari","octopus","abalone","conch","snail","escargot"] },
+        sesame: { name:"Sesame Allergy", icon:"&#x26AA;", desc:"Sesame seeds and oil. Increasingly common.", triggers:["sesame","tahini","gomashio","halvah"] },
+        sulfite: { name:"Sulfite Sensitivity", icon:"&#x1F377;", desc:"Preservative in wine, dried foods.", triggers:["sulfite","sulphite","sulfur dioxide","sulphur dioxide","sodium metabisulfite","potassium metabisulfite","sodium bisulfite"] },
+        sulphur: { name:"Sulphur Dioxide Sensitivity", icon:"&#x1F4A8;", desc:"Related to sulfites. Found in preserved foods.", triggers:["sulphur dioxide","sulfur dioxide","sulphite","sulfite","preserved","dried fruit"] },
+        corn: { name:"Corn Allergy", icon:"&#x1F33D;", desc:"Reaction to corn and corn products.", triggers:["corn","maize","cornstarch","corn flour","corn syrup","corn oil","high fructose corn syrup","polenta"] },
+        celery: { name:"Celery Allergy", icon:"&#x1F96C;", desc:"Common in Europe. Can cause anaphylaxis.", triggers:["celery","celeriac","celery seed","celery salt"] },
+        mustard: { name:"Mustard Allergy", icon:"&#x1F6AB;", desc:"Allergy to mustard seeds and powder.", triggers:["mustard","mustard seed","mustard powder","dijon","wholegrain mustard"] },
+        lupin: { name:"Lupin Allergy", icon:"&#x1F33B;", desc:"Legume related to peanuts. Found in flour and bakery.", triggers:["lupin","lupin flour","lupini"] },
+        nightshade: { name:"Nightshade Sensitivity", icon:"&#x1F335;", desc:"Tomatoes, peppers, potatoes, eggplant can cause inflammation.", triggers:["tomato","pepper","bell pepper","chili","paprika","potato","eggplant","aubergine","tobacco","goji berry"] },
+        histamine: { name:"Histamine Intolerance", icon:"&#x26A0;", desc:"Difficulty breaking down histamine in food.", triggers:["fermented","aged cheese","wine","beer","sauerkraut","kombucha","vinegar","smoked meat","sardine","anchov","tuna","leftover","processed meat","salami","sausage"] },
+        fructose: { name:"Fructose Intolerance", icon:"&#x1F34E;", desc:"Difficulty absorbing fructose.", triggers:["fructose","fruit juice","honey","agave","high fructose","apple","pear","mango","watermelon","asparagus","artichoke"] },
+        lactose: { name:"Lactose Intolerance", icon:"&#x2757;", desc:"Can't digest lactose (different from milk allergy).", triggers:["lactose","milk","cream","ice cream","yogurt","cheese","whey","butter"] },
+        gluten: { name:"Gluten Sensitivity / Celiac", icon:"&#x1F35E;", desc:"Reaction to gluten protein in wheat, barley, rye.", triggers:["gluten","wheat","barley","rye","spelt","kamut","bulgur","couscous","seitan","malt","brewer yeast","triticale"] },
+        fodmap: { name:"FODMAP Sensitivity", icon:"&#x1F9C0;", desc:"Fermentable carbs that cause digestive issues.", triggers:["onion","garlic","wheat","rye","cauliflower","mushroom","apple","pear","honey","high fructose","mango","watermelon","milk","yogurt","cheese","legume","lentil","chickpea","bean","cauliflower","cabbage","broccoli","asparagus"] },
+        oxalate: { name:"Oxalate Sensitivity", icon:"&#x1F962;", desc:"High oxalate foods can cause kidney stones.", triggers:["spinach","rhubarb","beet","chocolate","cocoa","almond","cashew","peanut","star fruit","sweet potato","taro","miso","soy"] }
+    };
+
+    // ===== FOOD DATABASE (80+ common foods with ingredients) =====
+    const FOOD_DB = {
+        burger:{name:"Burger",ingredients:"Bun (wheat flour, sugar, yeast, egg), Beef patty, Lettuce, Tomato, Onion, Cheese (milk), Ketchup (tomato, vinegar, sugar), Mustard (mustard seeds, vinegar)"},
+        cheeseburger:{name:"Cheeseburger",ingredients:"Bun (wheat flour, egg, sugar), Beef patty, Cheddar cheese (milk), Lettuce, Tomato, Onion, Pickles, Ketchup"},
+        chicken_burger:{name:"Chicken Burger",ingredients:"Bun (wheat flour, egg), Chicken breast (antibiotics), Lettuce, Mayo (egg, oil), Tomato"},
+        hamburger:{name:"Hamburger",ingredients:"Bun (wheat flour, egg), Beef patty, Lettuce, Tomato, Onion, Ketchup, Mustard"},
+        pizza:{name:"Pizza",ingredients:"Dough (wheat flour, yeast, olive oil, salt), Tomato sauce (tomato, basil, garlic), Mozzarella cheese (milk), Olive oil"},
+        pepperoni_pizza:{name:"Pepperoni Pizza",ingredients:"Dough (wheat flour, yeast), Tomato sauce, Mozzarella cheese (milk), Pepperoni (pork, beef, salt, spices, paprika, nitrates)"},
+        margherita:{name:"Margherita Pizza",ingredients:"Pizza dough (wheat flour, yeast), Tomato sauce (tomato, basil), Fresh mozzarella (milk), Fresh basil, Olive oil"},
+        french_fries:{name:"French Fries",ingredients:"Potatoes, Vegetable oil (palm, sunflower), Salt"},
+        sweet_potato_fries:{name:"Sweet Potato Fries",ingredients:"Sweet potato, Vegetable oil, Salt, Cornstarch"},
+        chicken_nuggets:{name:"Chicken Nuggets",ingredients:"Chicken breast, Wheat flour, Egg, Breadcrumbs (wheat), Salt, Spices, Dextrose, Vegetable oil"},
+        chicken_tenders:{name:"Chicken Tenders",ingredients:"Chicken breast, Wheat flour, Buttermilk (milk), Egg, Breadcrumbs, Salt, Pepper, Paprika, Oil"},
+        fried_chicken:{name:"Fried Chicken",ingredients:"Chicken, Wheat flour, Buttermilk (milk), Egg, Salt, Black pepper, Garlic powder, Paprika, Oil"},
+        buffalo_wings:{name:"Buffalo Wings",ingredients:"Chicken wings, Flour (wheat), Egg, Hot sauce (chili, vinegar, salt), Butter (milk), Blue cheese dressing (milk, egg)"},
+        tacos:{name:"Tacos",ingredients:"Corn tortilla or Wheat tortilla, Ground beef, Lettuce, Tomato, Cheese (milk), Sour cream (milk), Salsa (tomato, onion, chili)"},
+        burrito:{name:"Burrito",ingredients:"Flour tortilla (wheat, lard), Rice, Black beans, Cheese (milk), Sour cream (milk), Lettuce, Salsa, Guacamole (avocado)"},
+        quesadilla:{name:"Quesadilla",ingredients:"Flour tortilla (wheat), Cheese (milk, cheddar, monterey jack), Chicken, Peppers, Onion"},
+        nachos:{name:"Nachos",ingredients:"Corn tortilla chips, Cheese sauce (milk, cheese, whey), Jalapeños, Sour cream (milk), Salsa (tomato), Guacamole"},
+        sushi:{name:"Sushi",ingredients:"Sushi rice (rice, rice vinegar, sugar, salt), Nori (seaweed), Fish (salmon, tuna - may contain parasites), Soy sauce (wheat, soy), Wasabi, Ginger"},
+        ramen:{name:"Ramen",ingredients:"Ramen noodles (wheat flour, egg, kansui), Pork broth (pork bones, salt), Soy sauce (wheat, soy), Chashu pork, Soft-boiled egg, Green onion, Nori"},
+        pho:{name:"Pho",ingredients:"Rice noodles, Beef broth (beef bones, star anise, cinnamon), Thinly sliced beef, Bean sprouts, Thai basil, Lime, Hoisin sauce (soy, wheat, sugar)"},
+        pad_thai:{name:"Pad Thai",ingredients:"Rice noodles, Shrimp or chicken, Egg, Tamarind paste, Fish sauce, Sugar, Peanuts, Bean sprouts, Lime, Chili"},
+        fried_rice:{name:"Fried Rice",ingredients:"Cooked rice, Soy sauce (wheat, soy), Egg, Vegetables (peas, carrots, corn), Sesame oil, Garlic, Green onion"},
+        stir_fry:{name:"Stir Fry",ingredients:"Mixed vegetables, Soy sauce (wheat, soy), Sesame oil, Garlic, Ginger, Chicken or beef, Rice or noodles"},
+        pasta:{name:"Pasta",ingredients:"Pasta (wheat flour, egg), Tomato sauce (tomato, basil, garlic, olive oil), Parmesan cheese (milk), Olive oil, Salt"},
+        spaghetti:{name:"Spaghetti Bolognese",ingredients:"Spaghetti (wheat flour), Ground beef, Tomato sauce (tomato, onion, garlic, basil), Parmesan cheese (milk), Olive oil"},
+        mac_cheese:{name:"Mac and Cheese",ingredients:"Macaroni pasta (wheat flour, egg), Cheddar cheese (milk), Butter (milk), Milk, Salt, Mustard powder"},
+        lasagna:{name:"Lasagna",ingredients:"Lasagna sheets (wheat flour, egg), Ground beef, Tomato sauce, Ricotta cheese (milk), Mozzarella cheese (milk), Parmesan (milk)"},
+        chicken_parmesan:{name:"Chicken Parmesan",ingredients:"Chicken breast, Wheat flour, Egg, Breadcrumbs (wheat), Marinara sauce (tomato), Mozzarella cheese (milk), Parmesan cheese (milk)"},
+        grilled_cheese:{name:"Grilled Cheese",ingredients:"Bread (wheat flour), Cheese (cheddar, American - milk), Butter (milk)"},
+        club_sandwich:{name:"Club Sandwich",ingredients:"Bread (wheat flour), Turkey, Bacon, Lettuce, Tomato, Mayonnaise (egg, oil)"},
+        sub_sandwich:{name:"Sub Sandwich",ingredients:"Sub roll (wheat flour, egg), Deli meat (turkey, ham), Cheese (milk), Lettuce, Tomato, Mayo (egg), Oil, Vinegar"},
+        pbj:{name:"Peanut Butter & Jelly",ingredients:"Bread (wheat flour), Peanut butter (peanuts), Jelly (fruit, sugar)"},
+        hot_dog:{name:"Hot Dog",ingredients:"Hot dog bun (wheat flour), Sausage (pork, beef, salt, spices, nitrates), Ketchup, Mustard (mustard seeds)"},
+        fish_sticks:{name:"Fish Sticks",ingredients:"Fish (cod, pollock), Wheat flour, Egg, Breadcrumbs (wheat), Oil, Salt"},
+        fish_chips:{name:"Fish and Chips",ingredients:"Fish (cod), Batter (wheat flour, egg, milk, beer), Potatoes, Oil, Salt, Mushy peas"},
+        grilled_salmon:{name:"Grilled Salmon",ingredients:"Salmon fillet, Olive oil, Lemon, Salt, Pepper, Dill"},
+        shrimp_scampi:{name:"Shrimp Scampi",ingredients:"Shrimp, Butter (milk), Garlic, White wine, Lemon juice, Parsley, Linguine (wheat, egg)"},
+        lobster_roll:{name:"Lobster Roll",ingredients:"Lobster meat, Butter (milk), Mayonnaise (egg), Lemon, Hot dog bun (wheat)"},
+        clam_chowder:{name:"Clam Chowder",ingredients:"Clams, Cream (milk), Butter (milk), Potatoes, Onion, Bacon, Salt, Thyme"},
+        crab_cakes:{name:"Crab Cakes",ingredients:"Crab meat, Breadcrumbs (wheat), Egg, Mayonnaise (egg), Mustard, Old Bay seasoning, Oil"},
+        calamari:{name:"Fried Calamari",ingredients:"Squid, Wheat flour, Egg, Breadcrumbs, Oil, Lemon, Marinara sauce (tomato)"},
+        shrimp_tempura:{name:"Shrimp Tempura",ingredients:"Shrimp, Tempura batter (wheat flour, egg, ice water), Dipping sauce (soy, mirin)"},
+        spring_rolls:{name:"Spring Rolls",ingredients:"Spring roll wrapper (wheat flour), Cabbage, Carrot, Shrimp or pork, Rice noodles, Soy sauce (wheat, soy), Sesame oil"},
+        dumplings:{name:"Dumplings",ingredients:"Dumpling wrapper (wheat flour), Ground pork, Cabbage, Ginger, Garlic, Soy sauce (wheat, soy), Sesame oil"},
+        egg_rolls:{name:"Egg Rolls",ingredients:"Egg roll wrapper (wheat flour, egg), Cabbage, Pork, Carrot, Soy sauce (wheat), Sesame oil, Oil"},
+        chicken_salad:{name:"Chicken Salad",ingredients:"Chicken breast, Mayonnaise (egg, oil), Celery, Onion, Lettuce, Salt, Pepper"},
+        caesar_salad:{name:"Caesar Salad",ingredients:"Romaine lettuce, Parmesan cheese (milk), Croutons (wheat, egg, butter-milk), Caesar dressing (anchovies-fish, egg, oil, lemon, garlic, Worcestershire-fish)"},
+        greek_salad:{name:"Greek Salad",ingredients:"Cucumber, Tomato, Red onion, Kalamata olives, Feta cheese (milk), Olive oil, Oregano"},
+        garden_salad:{name:"Garden Salad",ingredients:"Mixed greens, Tomato, Cucumber, Carrot, Red onion, Olive oil, Vinegar"},
+        potato_salad:{name:"Potato Salad",ingredients:"Potatoes, Mayonnaise (egg, oil), Mustard (mustard seeds), Celery, Egg (boiled), Onion, Salt, Pepper"},
+        coleslaw:{name:"Coleslaw",ingredients:"Cabbage, Carrot, Mayonnaise (egg, oil), Vinegar, Sugar, Salt, Pepper"},
+        soup:{name:"Chicken Soup",ingredients:"Chicken broth, Chicken, Noodles (wheat flour, egg), Carrots, Celery, Onion, Salt, Thyme"},
+        tomato_soup:{name:"Tomato Soup",ingredients:"Tomatoes, Cream (milk), Butter (milk), Onion, Basil, Salt, Sugar"},
+        minestrone:{name:"Minestrone Soup",ingredients:"Broth, Beans (kidney), Pasta (wheat), Tomatoes, Carrots, Celery, Onion, Zucchini, Parmesan (milk)"},
+        chili:{name:"Chili",ingredients:"Ground beef, Kidney beans, Tomatoes, Onion, Garlic, Chili powder, Cumin, Salt, Cheese (milk, topping), Sour cream (milk, topping)"},
+        steak:{name:"Steak",ingredients:"Beef steak, Salt, Pepper, Butter (milk), Garlic, Rosemary"},
+        bbq_ribs:{name:"BBQ Ribs",ingredients:"Pork ribs, BBQ sauce (tomato, vinegar, sugar, molasses, mustard), Salt, Pepper, Garlic"},
+        meatloaf:{name:"Meatloaf",ingredients:"Ground beef, Breadcrumbs (wheat), Egg, Onion, Garlic, Ketchup (tomato), Worcestershire sauce (fish, soy), Salt, Pepper"},
+        mashed_potatoes:{name:"Mashed Potatoes",ingredients:"Potatoes, Butter (milk), Milk, Salt, Pepper, Garlic"},
+        baked_potato:{name:"Baked Potato",ingredients:"Potato, Butter (milk), Sour cream (milk), Cheese (milk), Chives"},
+        mac_n_cheese:{name:"Mac & Cheese",ingredients:"Macaroni (wheat flour), Cheddar cheese (milk), Butter (milk), Milk, Salt, Breadcrumbs (wheat)"},
+        pancakes:{name:"Pancakes",ingredients:"Wheat flour, Milk, Eggs, Butter (milk), Sugar, Baking powder, Salt, Vanilla"},
+        waffles:{name:"Waffles",ingredients:"Wheat flour, Milk, Eggs, Butter (milk), Sugar, Baking powder, Vanilla, Salt"},
+        french_toast:{name:"French Toast",ingredients:"Bread (wheat flour), Eggs, Milk, Cinnamon, Vanilla, Butter (milk), Maple syrup"},
+        omelette:{name:"Omelette",ingredients:"Eggs, Butter (milk), Cheese (milk), Salt, Pepper, Vegetables"},
+        scrambled_eggs:{name:"Scrambled Eggs",ingredients:"Eggs, Butter (milk), Milk, Salt, Pepper"},
+        bacon_eggs:{name:"Bacon & Eggs",ingredients:"Bacon (pork), Eggs, Butter (milk), Salt, Pepper"},
+        cereal:{name:"Cereal with Milk",ingredients:"Cereal (wheat, corn, oats - may contain nuts), Milk, Sugar"},
+        oatmeal:{name:"Oatmeal",ingredients:"Oats, Water or Milk, Sugar, Cinnamon, Salt"},
+        toast:{name:"Toast",ingredients:"Bread (wheat flour, yeast), Butter (milk)"},
+        bagel:{name:"Bagel",ingredients:"Bagel (wheat flour, malt, yeast), Cream cheese (milk), Butter (milk)"},
+        croissant:{name:"Croissant",ingredients:"Croissant (wheat flour, butter-milk, egg, sugar, yeast), Butter (milk)"},
+        muffin:{name:"Muffin",ingredients:"Wheat flour, Sugar, Butter (milk), Eggs, Milk, Baking powder, Vanilla, Blueberries or Chocolate chips"},
+        donut:{name:"Donut",ingredients:"Wheat flour, Sugar, Eggs, Butter (milk), Yeast, Oil, Glaze (sugar, milk)"},
+        cookies:{name:"Cookies",ingredients:"Wheat flour, Sugar, Butter (milk), Eggs, Baking soda, Vanilla, Chocolate chips, Salt"},
+        brownie:{name:"Brownie",ingredients:"Chocolate, Wheat flour, Sugar, Butter (milk), Eggs, Cocoa powder, Vanilla, Salt"},
+        cake:{name:"Cake",ingredients:"Wheat flour, Sugar, Eggs, Butter (milk), Milk, Baking powder, Vanilla, Frosting (sugar, butter-milk)"},
+        cheesecake:{name:"Cheesecake",ingredients:"Cream cheese (milk), Sugar, Eggs, Graham crackers (wheat), Butter (milk), Vanilla, Sour cream (milk)"},
+        ice_cream:{name:"Ice Cream",ingredients:"Cream (milk), Milk, Sugar, Egg yolks, Vanilla, Stabilizers"},
+        chocolate:{name:"Chocolate Bar",ingredients:"Cocoa butter, Sugar, Milk powder, Soy lecithin, Vanilla"},
+        milkshake:{name:"Milkshake",ingredients:"Ice cream (milk, egg), Milk, Sugar, Flavoring"},
+        smoothie:{name:"Smoothie",ingredients:"Fruit (strawberry, banana), Yogurt (milk), Milk, Honey, Ice"},
+        latte:{name:"Latte",ingredients:"Espresso (coffee), Steamed milk (milk), Milk foam"},
+        trail_mix:{name:"Trail Mix",ingredients:"Peanuts, Almonds (tree nut), Cashews (tree nut), Raisins, Chocolate chips, Sunflower seeds"},
+        granola_bar:{name:"Granola Bar",ingredients:"Oats, Honey, Peanuts, Nuts (tree nut), Sugar, Soy lecithin, Peanut butter"},
+        protein_bar:{name:"Protein Bar",ingredients:"Whey protein (milk), Soy protein, Nuts, Honey, Chocolate, Peanut butter"},
+        instant_noodles:{name:"Instant Noodles",ingredients:"Wheat flour noodles, Palm oil, Seasoning packet (soy sauce - wheat, soy, MSG, salt), Dehydrated vegetables"},
+        frozen_pizza:{name:"Frozen Pizza",ingredients:"Pizza crust (wheat flour), Tomato sauce, Mozzarella cheese (milk), Preservatives, Salt"},
+        frozen_meal:{name:"Frozen Meal",ingredients:"Various ingredients, Preservatives, Sodium, Soy sauce (wheat, soy), Modified food starch"},
+        apple_pie:{name:"Apple Pie",ingredients:"Wheat flour, Apples, Sugar, Butter (milk), Cinnamon, Egg, Salt"},
+        pancakes_syrup:{name:"Pancakes with Syrup",ingredients:"Pancakes (wheat flour, milk, egg, butter), Maple syrup or Corn syrup"},
+        shrimp_tempura2:{name:"Shrimp Tempura",ingredients:"Shrimp, Wheat flour, Egg, Ice water, Dipping sauce (soy - wheat, soy)"},
+        chicken_curry:{name:"Chicken Curry",ingredients:"Chicken, Coconut milk, Curry paste (chili, lemongrass, garlic, shrimp paste-fish), Rice, Oil, Salt"},
+        butter_chicken:{name:"Butter Chicken",ingredients:"Chicken, Butter (milk), Cream (milk), Tomato, Yogurt (milk), Spices (garam masala, turmeric, cumin), Rice"},
+        tikka_masala:{name:"Tikka Masala",ingredients:"Chicken, Yogurt (milk), Cream (milk), Tomato sauce, Spices (garam masala, cumin, paprika), Rice (basmati)"},
+        biryani:{name:"Biryani",ingredients:"Basmati rice, Chicken or lamb, Yogurt (milk), Onion, Saffron, Spices, Ghee (milk), Fried onions"},
+        pad_see_ew:{name:"Pad See Ew",ingredients:"Wide rice noodles, Soy sauce (wheat, soy), Egg, Chinese broccoli, Chicken or beef, Garlic, Oil"},
+        spring_roll2:{name:"Spring Rolls",ingredients:"Rice paper wrapper or Wheat wrapper, Shrimp, Rice vermicelli, Lettuce, Herbs, Peanut sauce"},
+        fish_tacos:{name:"Fish Tacos",ingredients:"Corn tortilla, White fish (cod, mahi-mahi), Cabbage, Lime, Crema (milk), Chipotle sauce, Cilantro"},
+        shrimp_taco:{name:"Shrimp Taco",ingredients:"Corn or Flour tortilla, Shrimp, Cabbage, Lime, Avocado, Crema (milk), Chili sauce"},
+        poke_bowl:{name:"Poke Bowl",ingredients:"Sushi rice, Raw tuna or salmon (fish), Soy sauce (wheat, soy), Sesame oil, Avocado, Seaweed, Edamame (soy), Cucumber"},
+        acai_bowl:{name:"Acai Bowl",ingredients:"Acai berries, Banana, Granola (oats, nuts, honey), Coconut, Fruit toppings, Yogurt (milk)"},
+        ramen2:{name:"Tonkotsu Ramen",ingredients:"Wheat noodles (egg), Pork bone broth, Chashu pork, Soft egg, Nori, Green onion, Bean sprouts, Soy tare (wheat, soy)"},
+        dumplings2:{name:"Potstickers",ingredients:"Wrapper (wheat flour), Ground pork, Cabbage, Ginger, Garlic, Soy sauce (wheat, soy), Sesame oil"},
+        fried_rice2:{name:"Egg Fried Rice",ingredients:"Rice, Egg, Soy sauce (wheat, soy), Sesame oil, Peas, Carrots, Corn, Garlic, Green onion"},
+        pad_thai2:{name:"Pad Thai",ingredients:"Rice noodles, Shrimp, Egg, Tamarind, Fish sauce, Palm sugar, Peanuts, Bean sprouts, Lime"},
+        chicken_wings:{name:"Chicken Wings",ingredients:"Chicken wings, Flour (wheat), Egg, Oil, Hot sauce (chili, vinegar), Butter (milk)"},
+        bbq_chicken:{name:"BBQ Chicken",ingredients:"Chicken, BBQ sauce (tomato, vinegar, sugar, molasses), Salt, Pepper"},
+        fish_fingers:{name:"Fish Fingers",ingredients:"Fish (cod), Breadcrumbs (wheat), Wheat flour, Egg, Oil, Salt"},
+        prawn_cocktail:{name:"Prawn Cocktail",ingredients:"Prawns (shellfish), Lettuce, Marie Rose sauce (ketchup, mayonnaise-egg, Worcestershire sauce-fish), Lemon"},
+        tuna_sandwich:{name:"Tuna Sandwich",ingredients:"Bread (wheat flour), Canned tuna (fish), Mayonnaise (egg, oil), Celery, Lettuce, Tomato"},
+        egg_sandwich:{name:"Egg Sandwich",ingredients:"Bread (wheat flour), Egg (fried or scrambled), Butter (milk), Salt, Pepper, Lettuce"},
+        breakfast_burrito:{name:"Breakfast Burrito",ingredients:"Flour tortilla (wheat), Egg, Cheese (milk), Bacon (pork), Salsa (tomato), Onion, Pepper"},
+        quinoa_bowl:{name:"Quinoa Bowl",ingredients:"Quinoa, Vegetables (sweet potato, kale, chickpeas), Tahini (sesame), Lemon, Olive oil"},
+        buddha_bowl:{name:"Buddha Bowl",ingredients:"Brown rice, Tofu (soy), Edamame (soy), Avocado, Carrot, Cucumber, Sesame seeds, Soy sauce (wheat, soy)"},
+        avocado_toast:{name:"Avocado Toast",ingredients:"Bread (wheat flour), Avocado, Lemon, Salt, Chili flakes, Olive oil"},
+        bruschetta:{name:"Bruschetta",ingredients:"Bread (wheat flour), Tomato, Garlic, Basil, Olive oil, Balsamic vinegar"},
+        hummus:{name:"Hummus",ingredients:"Chickpeas, Tahini (sesame), Lemon juice, Garlic, Olive oil, Salt"},
+        guacamole:{name:"Guacamole",ingredients:"Avocado, Lime juice, Onion, Tomato, Cilantro, Salt, Jalapeño"},
+        mozzarella_sticks:{name:"Mozzarella Sticks",ingredients:"Mozzarella cheese (milk), Wheat flour, Egg, Breadcrumbs (wheat), Oil, Marinara sauce (tomato)"},
+        onion_rings:{name:"Onion Rings",ingredients:"Onion, Wheat flour, Egg, Milk, Breadcrumbs (wheat), Oil, Salt"},
+        spinach_artichoke:{name:"Spinach Artichoke Dip",ingredients:"Spinach, Artichoke, Cream cheese (milk), Sour cream (milk), Parmesan (milk), Garlic"},
+        buffalo_chicken_dip:{name:"Buffalo Chicken Dip",ingredients:"Chicken, Cream cheese (milk), Ranch dressing (milk, egg), Hot sauce (chili), Cheddar cheese (milk)"},
+        energy_drink:{name:"Energy Drink",ingredients:"Water, Sugar or Sucralose, Caffeine, Taurine, B vitamins, Citric acid, Artificial flavors, Color (Red 40, Yellow 5)"},
+        soda:{name:"Soda",ingredients:"Carbonated water, High fructose corn syrup or Sugar, Caramel color, Phosphoric acid, Natural flavors, Caffeine"},
+        juice:{name:"Fruit Juice",ingredients:"Apple juice or Orange juice, Ascorbic acid (vitamin C), May contain: Preservatives, Added sugar"},
+        chocolate_milk:{name:"Chocolate Milk",ingredients:"Milk, Sugar, Cocoa, Vanilla, Salt"},
+        yogurt:{name:"Yogurt",ingredients:"Milk, Live active cultures, Sugar, Fruit, Pectin, Vitamin D"},
+        smoothie_bowl:{name:"Smoothie Bowl",ingredients:"Acai or Mixed berries, Banana, Yogurt (milk), Granola (oats, nuts), Coconut, Honey"},
+        poke2:{name:"Salmon Poke",ingredients:"Raw salmon (fish), Soy sauce (wheat, soy), Sesame oil, Rice, Avocado, Seaweed, Cucumber, Edamame (soy)"}
+    };
+
+    const FOOD_KEYWORDS = {};
+    Object.keys(FOOD_DB).forEach(k => { FOOD_KEYWORDS[k] = [k.replace(/_/g,' ')]; });
+    Object.assign(FOOD_KEYWORDS, {
+        burger:["burger","hamburger","cheeseburger"],pizza:["pizza"],fries:["fries","french fries","chips"],
+        nuggets:["nugget","chicken nugget"],fried_chicken:["fried chicken","chicken wings","wing"],
+        tacos:["taco"],sushi:["sushi","sashimi","maki"],ramen:["ramen"],pasta:["pasta","spaghetti","noodle"],
+        sandwich:["sandwich","sub","hoagie"],hot_dog:["hot dog","hotdog"],salad:["salad"],
+        ice_cream:["ice cream","gelato"],chocolate:["chocolate"],cookies:["cookie"],
+        cake:["cake","cupcake"],pancakes:["pancake"],cereal:["cereal"],
+        grilled_cheese:["grilled cheese"],omelette:["omelette","omelet"],fried_rice:["fried rice"],
+        stir_fry:["stir fry"],soup:["soup"],steak:["steak"],bbq:["bbq","barbecue"],
+        curry:["curry"],tacos:["taco","tacos"],burrito:["burrito"],quesadilla:["quesadilla"],
+        nachos:["nachos"],calamari:["calamari"],shrimp:["shrimp","prawn"],crab:["crab"],
+        lobster:["lobster"],clam:["clam","chowder"],fish:["fish and chips","fish stick"],
+        toast:["toast"],bagel:["bagel"],croissant:["croissant"],muffin:["muffin"],
+        donut:["donut","doughnut"],brownie:["brownie"],cheesecake:["cheesecake"],
+        milkshake:["milkshake"],smoothie:["smoothie"],latte:["latte","cappuccino"],
+        wrap:["wrap"],burrito:["burrito"],dumpling:["dumpling","potsticker","gyoza"],
+        spring_roll:["spring roll","egg roll"],pho:["pho"],pad_thai:["pad thai"],
+        biryani:["biryani"],butter_chicken:["butter chicken"],chicken_curry:["chicken curry"],
+        hummus:["hummus"],guacamole:["guacamole"],poke:["poke"],acai:["acai"],
+        energy_drink:["red bull","monster","energy drink"],soda:["coke","pepsi","soda","sprite"],
+        juice:["juice","orange juice","apple juice"],trail_mix:["trail mix","nuts"],
+        granola:["granola"],protein_bar:["protein bar"],instant_noodles:["instant noodle","ramen cup","maruchan","top ramen"],
+        chicken_parmesan:["chicken parmesan","chicken parm"],lasagna:["lasagna"],
+        fish_tacos:["fish taco"],shrimp_tacos:["shrimp taco"],club_sandwich:["club sandwich"],
+        breakfast:["breakfast burrito","bacon egg"],frozen:["frozen meal","tv dinner"]
+    });
+
+    // ===== STATE =====
+    let currentPage = 'home';
+    let selectedImage = null;
+
+    // ===== NAVIGATION =====
+    function showPage(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        const el = document.getElementById(page + 'Page');
+        if (el) el.classList.add('active');
+        const nav = document.querySelector(`[data-page="${page}"]`);
+        if (nav) nav.classList.add('active');
+        currentPage = page;
+        window.scrollTo(0, 0);
+        document.getElementById('navLinks').classList.remove('active');
+    }
+    window.showPage = showPage;
+    function toggleMobileMenu() { document.getElementById('navLinks').classList.toggle('active'); }
+
+    // ===== AUTH =====
+    function showAuthModal(t) { document.getElementById('authModal').classList.add('active'); toggleAuthForm(t); }
+    window.showAuthModal = showAuthModal;
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); }
+    window.closeAuthModal = closeAuthModal;
+    function toggleAuthForm(t) {
+        document.getElementById('loginForm').classList.toggle('hidden', t !== 'login');
+        document.getElementById('registerForm').classList.toggle('hidden', t !== 'register');
+    }
+    window.toggleAuthForm = toggleAuthForm;
+
+    // ===== ALLERGY GRIDS =====
+    const ALLERGY_LIST = ['peanut','treenut','milk','egg','wheat','soy','shellfish','fish','molluscs','sesame','sulfite','sulphur','corn','celery','mustard','lupin','nightshade','histamine','fructose','lactose','gluten','fodmap','oxalate'];
+    const CONDITION_LIST = ['g6pd'];
+
+    function initAllergyGrids() {
+        const ag = document.getElementById('allergyGrid');
+        const cg = document.getElementById('conditionsGrid');
+        ALLERGY_LIST.forEach(k => { const i = ALLERGY_DB[k]; if(i) ag.innerHTML += `<div class="allergy-item" data-allergy="${k}" onclick="toggleAllergyItem(this)"><span>${i.icon}</span><span>${i.name}</span></div>`; });
+        CONDITION_LIST.forEach(k => { const i = ALLERGY_DB[k]; if(i) cg.innerHTML += `<div class="allergy-item" data-condition="${k}" onclick="toggleAllergyItem(this)"><span>${i.icon}</span><span>${i.name}</span></div>`; });
+    }
+    function toggleAllergyItem(el) { el.classList.toggle('selected'); }
+    window.toggleAllergyItem = toggleAllergyItem;
+    function updateAllergySelections(a, c) {
+        document.querySelectorAll('#allergyGrid .allergy-item').forEach(i => { i.classList.toggle('selected', a.includes(i.dataset.allergy)); });
+        document.querySelectorAll('#conditionsGrid .allergy-item').forEach(i => { i.classList.toggle('selected', c.includes(i.dataset.condition)); });
+    }
+
+    // ===== ALLERGY INFO PAGE =====
+    function initAllergyInfo() {
+        const el = document.getElementById('allergyInfoList');
+        Object.entries(ALLERGY_DB).forEach(([k, info]) => {
+            el.innerHTML += `<div class="allergy-info-card"><h3>${info.icon} ${info.name}</h3><p style="color:var(--text-muted);margin-bottom:1rem">${info.desc}</p><div class="food-list"><div class="food-column avoid"><h4><i class="fas fa-times-circle"></i> Triggers</h4><ul>${info.triggers.map(t=>`<li>${t}</li>`).join('')}</ul></div><div class="food-column safe"><h4><i class="fas fa-check-circle"></i> Usually Safe</h4><ul><li>Check with your doctor for personal advice</li><li>Individual reactions vary</li><li>When in doubt, avoid it</li></ul></div></div></div>`;
+        });
+    }
+
+    // ===== IMAGE UPLOAD =====
+    function initUpload() {
+        const area = document.getElementById('uploadArea');
+        const imgIn = document.getElementById('imageInput');
+        const camIn = document.getElementById('cameraInput');
+        area.addEventListener('click', e => { if(e.target.tagName!=='BUTTON'&&e.target.tagName!=='I') imgIn.click(); });
+        area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
+        area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+        area.addEventListener('drop', e => { e.preventDefault(); area.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) handleImage(f); });
+        imgIn.addEventListener('change', e => { if(e.target.files[0]) handleImage(e.target.files[0]); });
+        camIn.addEventListener('change', e => { if(e.target.files[0]) handleImage(e.target.files[0]); });
+    }
+    function handleImage(file) {
+        selectedImage = file;
+        const r = new FileReader();
+        r.onload = e => { document.getElementById('previewImage').src = e.target.result; document.getElementById('previewContainer').style.display='block'; document.getElementById('uploadArea').style.display='none'; document.getElementById('results').style.display='none'; };
+        r.readAsDataURL(file);
+    }
+    function resetUpload() {
+        selectedImage = null;
+        document.getElementById('imageInput').value='';
+        document.getElementById('cameraInput').value='';
+        document.getElementById('previewContainer').style.display='none';
+        document.getElementById('uploadArea').style.display='block';
+        document.getElementById('results').style.display='none';
+    }
+    window.resetUpload = resetUpload;
+
+    // ===== API KEY MANAGEMENT =====
+    function getApiKey() { return localStorage.getItem('openai_api_key') || ''; }
+    function saveApiKey() {
+        const key = document.getElementById('apiKeyInput').value.trim();
+        if (!key) { showToast('Enter an API key', 'error'); return; }
+        localStorage.setItem('openai_api_key', key);
+        updateApiStatus();
+        showToast('API key saved!', 'success');
+    }
+    window.saveApiKey = saveApiKey;
+    function toggleApiKeyVisibility() {
+        const inp = document.getElementById('apiKeyInput');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+    window.toggleApiKeyVisibility = toggleApiKeyVisibility;
+    function updateApiStatus() {
+        const key = getApiKey();
+        const el = document.getElementById('apiStatus');
+        const inp = document.getElementById('apiKeyInput');
+        if (key) {
+            el.className = 'api-status connected';
+            el.innerHTML = '<i class="fas fa-check-circle"></i> API key is set. AI is ready!';
+            inp.value = key;
+        } else {
+            el.className = 'api-status disconnected';
+            el.innerHTML = '<i class="fas fa-times-circle"></i> No API key. Add one to use AI features.';
+        }
+    }
+
+    // ===== GET USER ALLERGIES =====
+    function getUserAllergies() {
+        if (window.userProfile) {
+            const a = [...(window.userProfile.allergies||[]), ...(window.userProfile.conditions||[])];
+            if (a.length > 0) return a;
+        }
+        const qs = Array.from(document.querySelectorAll('#quickAllergyGrid .allergy-item.selected')).map(e=>e.dataset.allergy);
+        if (qs.length > 0) return qs;
+        const pg = Array.from(document.querySelectorAll('#allergyGrid .allergy-item.selected')).map(e=>e.dataset.allergy);
+        const pc = Array.from(document.querySelectorAll('#conditionsGrid .allergy-item.selected')).map(e=>e.dataset.condition);
+        if (pg.length||pc.length) return [...pg,...pc];
+        return Object.keys(ALLERGY_DB); // check ALL if none selected
+    }
+
+    // ===== AI ANALYSIS WITH OPENAI =====
+    async function callOpenAI(messages) {
+        const key = getApiKey();
+        if (!key) throw new Error('NO_API_KEY');
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+            body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 1500, temperature: 0.3 })
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(()=>({}));
+            throw new Error(err.error?.message || `API error ${resp.status}`);
+        }
+        return await resp.json();
+    }
+
+    async function analyzeImageWithAI(imageBase64) {
+        const allergies = getUserAllergies();
+        const allergyNames = allergies.map(k => ALLERGY_DB[k]?.name || k).join(', ');
+
+        const messages = [
+            { role: 'system', content: `You are a food safety expert and allergist assistant. You analyze food images to identify ALL ingredients, food items, and potential allergens. You are helping someone with these allergies/conditions: ${allergyNames}. 
+
+Be extremely thorough. For EVERY ingredient you identify:
+1. List every single ingredient, component, sauce, seasoning, preservative, and additive you can see or infer
+2. Cross-reference with the user's allergies
+3. Rate safety: SAFE / MAY AFFECT / DANGEROUS / SEVERE REACTION
+4. Explain WHY each flagged item is dangerous
+
+IMPORTANT: Even hidden ingredients like "wheat" in bread, "egg" in mayo, "milk" in cheese, "soy" in soy sauce MUST be flagged.
+
+Respond in this EXACT JSON format:
+{
+  "food_name": "name of the food",
+  "detected_ingredients": ["ingredient1", "ingredient2", ...],
+  "allergens_found": ["allergen1", "allergen2", ...],
+  "status": "safe" or "may-affect" or "dangerous" or "severe",
+  "warnings": ["warning1", "warning2", ...],
+  "ai_summary": "detailed explanation of findings",
+  "hidden_allergens": ["hidden allergen1", "hidden allergen2"]
+}` },
+            { role: 'user', content: [
+                { type: 'text', text: `Analyze this food image. Identify EVERY ingredient and check for allergens. My allergies/conditions: ${allergyNames}. Rate safety level.` },
+                { type: 'image_url', image_url: { url: imageBase64, detail: 'high' } }
+            ]}
+        ];
+
+        const result = await callOpenAI(messages);
+        const content = result.choices[0].message.content;
+
+        // Try to parse JSON from response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            try {
+                return JSON.parse(jsonMatch[0]);
+            } catch(e) {}
+        }
+
+        // Fallback: return as text analysis
+        return {
+            food_name: 'Scanned Food',
+            detected_ingredients: [],
+            allergens_found: [],
+            status: content.toLowerCase().includes('danger') ? 'dangerous' : content.toLowerCase().includes('safe') ? 'safe' : 'may-affect',
+            warnings: [content],
+            ai_summary: content,
+            hidden_allergens: []
+        };
+    }
+
+    async function analyzeTextWithAI(text) {
+        const allergies = getUserAllergies();
+        const allergyNames = allergies.map(k => ALLERGY_DB[k]?.name || k).join(', ');
+
+        const messages = [
+            { role: 'system', content: `You are a food safety expert. Analyze the following food/ingredient text and check for allergens.
+
+User's allergies/conditions: ${allergyNames}
+
+For EVERY ingredient mentioned or implied:
+1. List ALL ingredients (including hidden ones like "wheat" in bread, "egg" in mayo, "milk" in butter)
+2. Flag ANY that match the user's allergies
+3. Rate: SAFE / MAY AFFECT / DANGEROUS / SEVERE REACTION
+4. Identify hidden/allergic ingredients
+
+Respond in EXACT JSON:
+{
+  "food_name": "name of food",
+  "detected_ingredients": ["all ingredients found"],
+  "allergens_found": ["matching allergens"],
+  "status": "safe" or "may-affect" or "dangerous" or "severe",
+  "warnings": ["specific warnings"],
+  "ai_summary": "detailed analysis",
+  "hidden_allergens": ["hidden allergens like wheat in bun, egg in mayo"]
+}` },
+            { role: 'user', content: `Analyze this food/ingredients for my allergies (${allergyNames}):\n\n${text}` }
+        ];
+
+        const result = await callOpenAI(messages);
+        const content = result.choices[0].message.content;
+
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            try { return JSON.parse(jsonMatch[0]); } catch(e) {}
+        }
+
+        return {
+            food_name: text.substring(0, 50),
+            detected_ingredients: text.split(/[,;]+/).map(s=>s.trim()),
+            allergens_found: [],
+            status: content.toLowerCase().includes('danger') ? 'dangerous' : content.toLowerCase().includes('safe') ? 'safe' : 'may-affect',
+            warnings: [content],
+            ai_summary: content,
+            hidden_allergens: []
+        };
+    }
+
+    // ===== LOCAL FALLBACK ANALYSIS =====
+    function analyzeLocally(text) {
+        const allergies = getUserAllergies();
+        let ingredients = text.split(/[,;\n]+/).map(s=>s.trim().toLowerCase()).filter(s=>s.length>1);
+        let warnings = [];
+        let status = 'safe';
+
+        allergies.forEach(k => {
+            const info = ALLERGY_DB[k];
+            if (!info) return;
+            ingredients.forEach(ing => {
+                info.triggers.forEach(trig => {
+                    if (ing.includes(trig)) {
+                        const isG6PD = k === 'g6pd';
+                        const isFava = ['fava','broad bean','lima bean'].some(f=>ing.includes(f));
+                        if (isG6PD && isFava) { status = 'severe'; warnings.push(`SEVERE: "${ing}" - fava bean detected! Life-threatening for G6PD!`); }
+                        else if (isG6PD) { if(status!=='severe') status='dangerous'; warnings.push(`"${ing}" is a G6PD trigger food`); }
+                        else { if(status!=='severe') status='dangerous'; warnings.push(`"${ing}" contains ${info.name} allergen`); }
+                    }
+                });
+            });
+        });
+
+        if (!warnings.length && ingredients.length > 0) {
+            warnings.push('No known allergens detected in entered text');
+        }
+        if (!ingredients.length) {
+            status = 'may-affect';
+            warnings = ['No ingredients detected. Try entering them.'];
+        }
+
+        return { food_name: 'Scanned Item', detected_ingredients: ingredients, allergens_found: [], status, warnings, ai_summary: warnings.join('\n'), hidden_allergens: [] };
+    }
+
+    function lookupFood(query) {
+        const lower = query.toLowerCase();
+        for (const [k, keywords] of Object.entries(FOOD_KEYWORDS)) {
+            for (const kw of keywords) {
+                if (lower.includes(kw) || kw.includes(lower)) {
+                    return FOOD_DB[k] || null;
+                }
+            }
+        }
+        return null;
+    }
+
+    // ===== MAIN ANALYSIS FUNCTIONS =====
+    async function analyzeImage() {
+        if (!selectedImage) return;
+
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            showToast('Add your OpenAI API key in Settings first!', 'error');
+            showPage('settings');
+            return;
+        }
+
+        showLoading(true, 'Analyzing image with GPT-4 Vision AI...');
+
+        try {
+            // Convert image to base64
+            const base64 = await new Promise((resolve) => {
+                const r = new FileReader();
+                r.onload = e => resolve(e.target.result);
+                r.readAsDataURL(selectedImage);
+            });
+
+            const result = await analyzeImageWithAI(base64);
+            displayResults(result);
+
+            if (window.currentUser) {
+                saveScanToHistory({
+                    productName: result.food_name || 'Image Scan',
+                    ingredients: (result.detected_ingredients || []).join(', '),
+                    status: result.status,
+                    warnings: result.warnings
+                });
+            }
+        } catch (error) {
+            console.error('AI Error:', error);
+            if (error.message === 'NO_API_KEY' || error.message.includes('401')) {
+                showToast('Invalid API key. Check your Settings.', 'error');
+            } else {
+                showToast('AI Error: ' + error.message, 'error');
+            }
+        }
+
+        showLoading(false);
+    }
+    window.analyzeImage = analyzeImage;
+
+    async function analyzeManualIngredients() {
+        const text = document.getElementById('manualIngredients').value.trim();
+        if (!text) { showToast('Enter some ingredients or food name', 'error'); return; }
+
+        // Try food lookup first
+        const food = lookupFood(text);
+        if (food) {
+            document.getElementById('manualIngredients').value = food.ingredients;
+        }
+
+        const apiKey = getApiKey();
+        const inputText = food ? food.ingredients : text;
+
+        showLoading(true, apiKey ? 'Analyzing with AI...' : 'Analyzing locally (add API key in Settings for AI)...');
+
+        try {
+            let result;
+            if (apiKey) {
+                result = await analyzeTextWithAI(inputText);
+            } else {
+                // Local fallback
+                await new Promise(r => setTimeout(r, 500));
+                result = analyzeLocally(inputText);
+            }
+
+            displayResults(result);
+
+            if (window.currentUser) {
+                saveScanToHistory({
+                    productName: result.food_name || 'Manual Entry',
+                    ingredients: (result.detected_ingredients || []).join(', '),
+                    status: result.status,
+                    warnings: result.warnings
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        }
+
+        showLoading(false);
+    }
+    window.analyzeManualIngredients = analyzeManualIngredients;
+
+    function searchFood(query) {
+        const el = document.getElementById('foodSuggestions');
+        if (!query || query.length < 2) { el.style.display = 'none'; return; }
+        const lower = query.toLowerCase();
+        const matches = [];
+        Object.entries(FOOD_DB).forEach(([k, food]) => {
+            if (k.replace(/_/g,' ').includes(lower) || food.name.toLowerCase().includes(lower)) {
+                matches.push({ key: k, food });
+            }
+        });
+        if (!matches.length) { el.style.display = 'none'; return; }
+        el.innerHTML = matches.slice(0, 8).map(m => `<div class="food-suggestion" onclick="selectFood('${m.key}')"><span class="food-name">${m.food.name}</span></div>`).join('');
+        el.style.display = 'block';
+    }
+    window.searchFood = searchFood;
+
+    function selectFood(key) {
+        const food = FOOD_DB[key];
+        if (!food) return;
+        document.getElementById('manualIngredients').value = food.ingredients;
+        document.getElementById('foodSearch').value = food.name;
+        document.getElementById('foodSuggestions').style.display = 'none';
+        analyzeManualIngredients();
+    }
+    window.selectFood = selectFood;
+
+    document.addEventListener('click', e => {
+        const s = document.getElementById('foodSuggestions');
+        const i = document.getElementById('foodSearch');
+        if (s && i && !i.contains(e.target) && !s.contains(e.target)) s.style.display = 'none';
+    });
+
+    // ===== DISPLAY RESULTS =====
+    function displayResults(result) {
+        const statusMap = {
+            safe: { icon: 'fa-check-circle', title: 'Safe', color: 'safe' },
+            'may-affect': { icon: 'fa-exclamation-triangle', title: 'May Affect You', color: 'may-affect' },
+            dangerous: { icon: 'fa-exclamation-circle', title: 'Dangerous', color: 'dangerous' },
+            severe: { icon: 'fa-skull-crossbones', title: 'SEVERE REACTION', color: 'severe' }
+        };
+
+        const st = result.status || 'safe';
+        const cfg = statusMap[st] || statusMap.safe;
+        const card = document.getElementById('resultCard');
+        card.className = 'result-card ' + cfg.color;
+        document.getElementById('resultIcon').innerHTML = `<i class="fas ${cfg.icon}"></i>`;
+        document.getElementById('resultTitle').textContent = cfg.title;
+        document.getElementById('resultSubtitle').textContent = result.food_name ? `Food: ${result.food_name}` : '';
+
+        const ings = result.detected_ingredients || [];
+        document.getElementById('detectedIngredients').textContent = ings.length ? ings.join(', ') : 'Ingredients analyzed by AI';
+
+        const wDiv = document.getElementById('warnings');
+        wDiv.innerHTML = '';
+
+        (result.warnings || []).forEach(w => {
+            const isBad = st === 'dangerous' || st === 'severe' || w.toLowerCase().includes('danger') || w.toLowerCase().includes('allergen');
+            wDiv.innerHTML += `<div class="warning-item ${isBad ? '' : 'safe'}"><i class="fas ${isBad ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i><span>${w}</span></div>`;
+        });
+
+        (result.hidden_allergens || []).forEach(h => {
+            wDiv.innerHTML += `<div class="warning-item info"><i class="fas fa-eye"></i><span><strong>Hidden allergen:</strong> ${h}</span></div>`;
+        });
+
+        (result.allergens_found || []).forEach(a => {
+            wDiv.innerHTML += `<div class="warning-item" style="background:rgba(139,92,246,.1)"><i class="fas fa-bolt" style="color:#8b5cf6"></i><span><strong>Allergy match:</strong> ${a}</span></div>`;
+        });
+
+        if (st === 'safe' && (!result.warnings || !result.warnings.length)) {
+            wDiv.innerHTML = `<div class="warning-item safe"><i class="fas fa-check-circle"></i><span>No known allergens detected!</span></div>`;
+        }
+
+        // AI summary
+        const aiBox = document.getElementById('aiAnalysis');
+        if (result.ai_summary) {
+            aiBox.style.display = 'block';
+            document.getElementById('aiAnalysisText').textContent = result.ai_summary;
+        } else {
+            aiBox.style.display = 'none';
+        }
+
+        document.getElementById('results').style.display = 'block';
+    }
+
+    function showLoading(show, text) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+        if (text) document.getElementById('loadingText').textContent = text;
+        const b = document.getElementById('scanBtn');
+        if (b) b.disabled = show;
+    }
+
+    function fmtStatus(s) {
+        return { safe:'Safe', 'may-affect':'May Affect', dangerous:'Dangerous', severe:'Severe' }[s] || s;
+    }
+
+    function showToast(msg, type='success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + type + ' show';
+        setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    async function saveScanToHistory(data) {
+        if (!window.currentUser || !window._saveScanData) return;
+        try {
+            await window._saveScanData(data);
+        } catch(e) { console.error('Save scan error:', e); }
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+        initAllergyGrids();
+        initAllergyInfo();
+        initUpload();
+        updateApiStatus();
+    });
+    </script>
+</body>
+</html>
